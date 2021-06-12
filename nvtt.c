@@ -10,6 +10,7 @@ typedef int (*NvAPI_Unload_t)();
 typedef int (*NvAPI_EnumPhysicalGPUs_t)(int **handles, int *count);
 typedef int (*NvAPI_GPU_GetFullName_t)(int *handle, char *sysname);
 typedef int (*NvAPI_GPU_GetBusId_t)(int *handle, NvU32 *pBusId);
+typedef int (*NvAPI_GPU_GetGPUType_t)(int *handle, int *pGpuType);
 
 NvAPI_QueryInterface_t NvQueryInterface = 0;
 NvAPI_Initialize_t NvInit = 0;
@@ -17,10 +18,11 @@ NvAPI_Unload_t NvUnload = 0;
 NvAPI_EnumPhysicalGPUs_t NvEnumGPUs = 0;
 NvAPI_GPU_GetFullName_t NvGetName = 0;
 NvAPI_GPU_GetBusId_t BusId = 0;
+NvAPI_GPU_GetGPUType_t NvGPUType = 0;
 
 int main(int argc, char **argv)
 {
-    int nGPU=0;
+    int nGPU=0, pGpuType=0;
     int *hdlGPU[64]={0};
     char sysname[64]={0};
     NvU32 pBusId;
@@ -33,6 +35,7 @@ int main(int argc, char **argv)
     NvEnumGPUs      = NvQueryInterface(0xE5AC921F);
     NvGetName       = NvQueryInterface(0xCEEE8E9F);
     BusId           = NvQueryInterface(0x1BE0B8E5);
+    NvGPUType       = NvQueryInterface(0xc33baeb1);
 
     NvInit();
     NvEnumGPUs(hdlGPU, &nGPU);
@@ -43,6 +46,14 @@ int main(int argc, char **argv)
     ret = BusId(hdlGPU[0], &pBusId);
     if(ret == NVAPI_OK){
       printf("BusId: %ld\n", pBusId);
+    }
+    ret = NvGPUType(hdlGPU[0], &pGpuType);
+    if(ret == NVAPI_OK){
+      switch(pGpuType){
+        case 1:      printf("\nGPU Type: CPU\n"); break;
+        case 2:      printf("\nGPU Type: Discrete\n"); break;
+        default:     printf("\nGPU Type: Unknown\n"); break;
+      }
     }
     NvUnload();
 
