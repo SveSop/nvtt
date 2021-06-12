@@ -43,8 +43,6 @@ int main(int argc, char **argv)
     NV_HDR_CAPABILITIES pHdrCapabilities;
     pHdrCapabilities.version = NV_HDR_CAPABILITIES_VER;
 
-    NvAPI_Status ret = NVAPI_OK;
-
     NvQueryInterface = (void*)GetProcAddress(LoadLibrary("nvapi.dll"), "nvapi_QueryInterface");
     NvInit          = NvQueryInterface(0x0150E828);
     NvUnload        = NvQueryInterface(0xD22BDD7E);
@@ -61,20 +59,17 @@ int main(int argc, char **argv)
     NvInit();
     NvEnumGPUs(hdlGPU, &nGPU);
     // Get adaptername for board. Simple text string.
-    ret = NvGetName(hdlGPU[0], sysname);
-    if(ret == NVAPI_OK){
+    if(NvGetName && NvGetName(hdlGPU[0], sysname) == NVAPI_OK){
       printf("Name: %s\n", sysname);
     }
     else printf("NvAPI_GPU_GetFullName not available!\n");
     // Get BusID
-    ret = BusId(hdlGPU[0], &pBusId);
-    if(ret == NVAPI_OK){
+    if(BusId && BusId(hdlGPU[0], &pBusId) == NVAPI_OK){
       printf("BusId: %ld\n", pBusId);
     }
     else printf("NvAPI_GPU_GetBusId not available!\n");
     // GPU Type.
-    ret = NvGPUType(hdlGPU[0], &pGpuType);
-    if(ret == NVAPI_OK){
+    if(NvGPUType && NvGPUType(hdlGPU[0], &pGpuType) == NVAPI_OK){
       switch(pGpuType){
         case 1:      printf("\nGPU Type: CPU\n"); break;
         case 2:      printf("\nGPU Type: Discrete\n"); break;
@@ -84,8 +79,7 @@ int main(int argc, char **argv)
     else printf("NvAPI_GPU_GetBusId not available!\n");
     // Driver version and branchstring. nVidia uses rxxx_xx for "branch". This is afaik not
     // reported very well in Linux drivers, so it will usually be a "faked" number.
-    ret = NvDriver(hdlDisp[0], &pVersion);
-    if(ret == NVAPI_OK){
+    if(NvDriver && NvDriver(hdlDisp[0], &pVersion) == NVAPI_OK){
       printf("Display Driver Branch: %s\n", pVersion.szBuildBranchString);
       printf("Display Driver Version: %ld\n", pVersion.drvVersion);
       printf("Adapter name: %s\n", pVersion.szAdapterString);
@@ -94,15 +88,13 @@ int main(int argc, char **argv)
       printf("Unable to obtain display driver info and adaptername!\n");
     }
     // Onboard memory size for Graphics Adapter
-    ret = NvGetMemSize(hdlGPU[0], &memsize);
-    if(ret == NVAPI_OK){
+    if(NvGetMemSize && NvGetMemSize(hdlGPU[0], &memsize) == NVAPI_OK){
       printf("VRAM: %dMB\n", memsize/1024);
     }
     else printf("NvAPI_GPU_GetPhysicalFrameBufferSize not available!\n");
     // Get device and vendor ID for adapter. Susbsystem ID and revision ID requires nvml usage
     // since this does not seem to be reported by vulkan.
-    ret = NvPCIID(hdlGPU[0], &pDeviceId, &pSubSystemId, &pRevisionId, &pExtDeviceId);
-    if(ret == NVAPI_OK){
+    if(NvPCIID && NvPCIID(hdlGPU[0], &pDeviceId, &pSubSystemId, &pRevisionId, &pExtDeviceId) == NVAPI_OK){
       u_int ven=(pDeviceId >> 16);
       short dev=pDeviceId;
       printf("DeviceID: %04X-%04X\n", dev, ven);
@@ -114,15 +106,13 @@ int main(int argc, char **argv)
     }
     else printf("NvAPI_GPU_GetPCIIdentifiers not available!\n");
     // Architecture of adapter. WIP needs human readable conversion instead of just decimal numbers.
-    ret = NvArch(hdlGPU[0], &pGpuArchInfo);
-    if(ret == NVAPI_OK){
+    if(NvArch && NvArch(hdlGPU[0], &pGpuArchInfo) == NVAPI_OK){
       printf("Architecture: %ld\n", pGpuArchInfo.architecture);
       printf("Revision: %ld\n", pGpuArchInfo.revision);
     }
     else printf("NvAPI_GPU_GetArchInfo not available!\n");
     // Check for HDR capabilities. DXVK does currently not support this.
-    ret = NvHDR(hdlDisp[0], &pHdrCapabilities);
-    if(ret == NVAPI_OK){
+    if(NvHDR && NvHDR(hdlDisp[0], &pHdrCapabilities) == NVAPI_OK){
       printf("GPU HDR Capabilities:\n");
       printf("  ST2084EotfSupport:          %s\n", pHdrCapabilities.isST2084EotfSupported?"true":"false");
       printf("  TraditionalHdrGamma:        %s\n", pHdrCapabilities.isTraditionalHdrGammaSupported?"true":"false");
