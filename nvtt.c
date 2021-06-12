@@ -17,6 +17,7 @@ typedef int (*NvAPI_GPU_GetPCIIdentifiers_t)(int *handle, NvU32 *pDeviceId, NvU3
 typedef int (*NvAPI_GPU_GetArchInfo_t)(int *handle, NV_GPU_ARCH_INFO *pGpuArchInfo);
 typedef int (*NvAPI_Disp_GetHdrCapabilities_t)(int *handle, NV_HDR_CAPABILITIES *pHdrCapabilities);
 typedef int (*NvAPI_GPU_GetRamType_t)(int *handle, int *memtype);
+typedef int (*NvAPI_GPU_GetBusType_t)(int *handle, int *pBusType);
 
 NvAPI_QueryInterface_t NvQueryInterface = 0;
 NvAPI_Initialize_t NvInit = 0;
@@ -31,10 +32,11 @@ NvAPI_GPU_GetPCIIdentifiers_t NvPCIID = 0;
 NvAPI_GPU_GetArchInfo_t NvArch = 0;
 NvAPI_Disp_GetHdrCapabilities_t NvHDR = 0;
 NvAPI_GPU_GetRamType_t NvGetMemType = 0;
+NvAPI_GPU_GetBusType_t NvBus = 0;
 
 int main(int argc, char **argv)
 {
-    int nGPU=0, pGpuType=0, memsize=0, memtype=0;
+    int nGPU=0, pGpuType=0, memsize=0, memtype=0, pBusType=0;
     int *hdlGPU[64]={0}, *hdlDisp[32]={0};
     char sysname[64]={0};
     NvU32 pBusId, pDeviceId, pSubSystemId, pRevisionId, pExtDeviceId;
@@ -58,6 +60,7 @@ int main(int argc, char **argv)
     NvArch          = NvQueryInterface(0xd8265d24);
     NvHDR           = NvQueryInterface(0x84f2a8df);
     NvGetMemType    = NvQueryInterface(0x57F7CAAC);
+    NvBus           = NvQueryInterface(0x1BB18724);
 
     NvInit();
     NvEnumGPUs(hdlGPU, &nGPU);
@@ -132,6 +135,17 @@ int main(int argc, char **argv)
       printf("Onboard memory type: GDDR%d\n", memtype<=8?5:6);
     }
     else printf("NvAPI_GPU_GetRamType is not available!\n");
+    // Get type of bus interface for adapter.
+    if(NvBus && NvBus(hdlGPU[0], &pBusType) == NVAPI_OK){
+      switch(pBusType){
+        case 0: printf("Undefined GPU Bus\n"); break;
+        case 1: printf("PCI Bus\n"); break;
+        case 2: printf("AGP Bus\n"); break;
+        case 3: printf("PCIexpress Bus\n"); break;
+        default: printf("Unknown GPU Bus\n"); break;
+      }
+    }
+    else printf("NvAPI_GPU_GetBusType is not available!\n");
     NvUnload();
 
     printf("Press ENTER to Continue\n");
