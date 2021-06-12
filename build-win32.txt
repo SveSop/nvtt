@@ -1,0 +1,16 @@
+[binaries]
+c = 'i686-w64-mingw32-gcc'
+ar = 'i686-w64-mingw32-ar'
+strip = 'i686-w64-mingw32-strip'
+
+[built-in options]
+c_link_args = ['-static']
+
+[properties]
+needs_exe_wrapper = true
+
+[host_machine]
+system = 'windows'
+cpu_family = 'x86'
+cpu = 'x86'
+endian = 'little'
