@@ -15,6 +15,7 @@ typedef int (*NvAPI_GetDisplayDriverVersion_t)(int *handle, NV_DISPLAY_DRIVER_VE
 typedef int (*NvAPI_GPU_GetPhysicalFrameBufferSize_t)(int *handle, int *memsize);
 typedef int (*NvAPI_GPU_GetPCIIdentifiers_t)(int *handle, NvU32 *pDeviceId, NvU32 *pSubSystemId, NvU32 *pRevisionId, NvU32 *pExtDeviceId);
 typedef int (*NvAPI_GPU_GetArchInfo_t)(int *handle, NV_GPU_ARCH_INFO *pGpuArchInfo);
+typedef int (*NvAPI_Disp_GetHdrCapabilities_t)(int *handle, NV_HDR_CAPABILITIES *pHdrCapabilities);
 
 NvAPI_QueryInterface_t NvQueryInterface = 0;
 NvAPI_Initialize_t NvInit = 0;
@@ -27,6 +28,7 @@ NvAPI_GetDisplayDriverVersion_t NvDriver = 0;
 NvAPI_GPU_GetPhysicalFrameBufferSize_t NvGetMemSize = 0;
 NvAPI_GPU_GetPCIIdentifiers_t NvPCIID = 0;
 NvAPI_GPU_GetArchInfo_t NvArch = 0;
+NvAPI_Disp_GetHdrCapabilities_t NvHDR = 0;
 
 int main(int argc, char **argv)
 {
@@ -38,6 +40,8 @@ int main(int argc, char **argv)
     pVersion.version = NV_DISPLAY_DRIVER_VERSION_VER;
     NV_GPU_ARCH_INFO pGpuArchInfo;
     pGpuArchInfo.version = NV_GPU_ARCH_INFO_VER;
+    NV_HDR_CAPABILITIES pHdrCapabilities;
+    pHdrCapabilities.version = NV_HDR_CAPABILITIES_VER;
 
     NvAPI_Status ret = NVAPI_OK;
 
@@ -52,6 +56,7 @@ int main(int argc, char **argv)
     NvGetMemSize    = NvQueryInterface(0x46FBEB03);
     NvPCIID         = NvQueryInterface(0x2ddfb66e);
     NvArch          = NvQueryInterface(0xd8265d24);
+    NvHDR           = NvQueryInterface(0x84f2a8df);
 
     NvInit();
     NvEnumGPUs(hdlGPU, &nGPU);
@@ -115,6 +120,18 @@ int main(int argc, char **argv)
       printf("Revision: %ld\n", pGpuArchInfo.revision);
     }
     else printf("NvAPI_GPU_GetArchInfo not available!\n");
+    // Check for HDR capabilities. DXVK does currently not support this.
+    ret = NvHDR(hdlDisp[0], &pHdrCapabilities);
+    if(ret == NVAPI_OK){
+      printf("GPU HDR Capabilities:\n");
+      printf("  ST2084EotfSupport:          %s\n", pHdrCapabilities.isST2084EotfSupported?"true":"false");
+      printf("  TraditionalHdrGamma:        %s\n", pHdrCapabilities.isTraditionalHdrGammaSupported?"true":"false");
+      printf("  EdrSupport:                 %s\n", pHdrCapabilities.isEdrSupported?"true":"false");
+      printf("  ExpandDefaultHdrParameters: %s\n", pHdrCapabilities.driverExpandDefaultHdrParameters?"true":"false");
+      printf("  TraditionalSdrGammaSupport; %s\n", pHdrCapabilities.isTraditionalSdrGammaSupported?"true":"false");
+      printf("  DolbyVisionSupport:         %s\n", pHdrCapabilities.isDolbyVisionSupported?"true":"false");
+    }
+    else printf("NvAPI_Disp_GetHdrCapabilities not supported!\n");
     NvUnload();
 
     printf("Press ENTER to Continue\n");
