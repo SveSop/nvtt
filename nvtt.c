@@ -55,14 +55,17 @@ int main(int argc, char **argv)
 
     NvInit();
     NvEnumGPUs(hdlGPU, &nGPU);
+    // Get adaptername for board. Simple text string.
     ret = NvGetName(hdlGPU[0], sysname);
     if(ret == NVAPI_OK){
       printf("Name: %s\n", sysname);
     }
+    // Get BusID
     ret = BusId(hdlGPU[0], &pBusId);
     if(ret == NVAPI_OK){
       printf("BusId: %ld\n", pBusId);
     }
+    // GPU Type.
     ret = NvGPUType(hdlGPU[0], &pGpuType);
     if(ret == NVAPI_OK){
       switch(pGpuType){
@@ -71,6 +74,8 @@ int main(int argc, char **argv)
         default:     printf("\nGPU Type: Unknown\n"); break;
       }
     }
+    // Driver version and branchstring. nVidia uses rxxx_xx for "branch". This is afaik not
+    // reported very well in Linux drivers, so it will usually be a "faked" number.
     ret = NvDriver(hdlDisp[0], &pVersion);
     if(ret == NVAPI_OK){
       printf("Display Driver Branch: %s\n", pVersion.szBuildBranchString);
@@ -80,10 +85,13 @@ int main(int argc, char **argv)
     else{
       printf("Unable to obtain display driver info and adaptername!\n");
     }
+    // Onboard memory size for Graphics Adapter
     ret = NvGetMemSize(hdlGPU[0], &memsize);
     if(ret == NVAPI_OK){
       printf("VRAM: %dMB\n", memsize/1024);
     }
+    // Get device and vendor ID for adapter. Susbsystem ID and revision ID requires nvml usage
+    // since this does not seem to be reported by vulkan.
     ret = NvPCIID(hdlGPU[0], &pDeviceId, &pSubSystemId, &pRevisionId, &pExtDeviceId);
     if(ret == NVAPI_OK){
       u_int ven=(pDeviceId >> 16);
@@ -95,6 +103,7 @@ int main(int argc, char **argv)
       printf("Revision ID: %lX\n", pRevisionId);
       printf("Ext Device ID: %lX\n", pExtDeviceId);
     }
+    // Architecture of adapter. WIP needs human readable conversion instead of just decimal numbers.
     ret = NvArch(hdlGPU[0], &pGpuArchInfo);
     if(ret == NVAPI_OK){
       printf("Architecture: %ld\n", pGpuArchInfo.architecture);
