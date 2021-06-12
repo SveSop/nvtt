@@ -20,6 +20,7 @@ typedef int (*NvAPI_GPU_GetRamType_t)(int *handle, int *memtype);
 typedef int (*NvAPI_GPU_GetBusType_t)(int *handle, int *pBusType);
 typedef int (*NvAPI_GPU_GetDynamicPstatesInfoEx_t)(int *handle, NV_GPU_DYNAMIC_PSTATES_INFO_EX *pDynamicPstatesInfoEx);
 typedef int (*NvAPI_GPU_GetThermalSettings_t)(int *handle, NvU32 sensorIndex, NV_GPU_THERMAL_SETTINGS *pThermalSettings);
+typedef int (*NvAPI_GPU_GetTachReading_t)(int *handle, NvU32 *pValue);
 
 NvAPI_QueryInterface_t NvQueryInterface = 0;
 NvAPI_Initialize_t NvInit = 0;
@@ -37,13 +38,14 @@ NvAPI_GPU_GetRamType_t NvGetMemType = 0;
 NvAPI_GPU_GetBusType_t NvBus = 0;
 NvAPI_GPU_GetDynamicPstatesInfoEx_t NvPstate = 0;
 NvAPI_GPU_GetThermalSettings_t NvThermals = 0;
+NvAPI_GPU_GetTachReading_t NvTach = 0;
 
 int main(int argc, char **argv)
 {
     int nGPU=0, pGpuType=0, memsize=0, memtype=0, pBusType=0;
     int *hdlGPU[64]={0}, *hdlDisp[32]={0};
     char sysname[64]={0};
-    NvU32 pBusId, pDeviceId, pSubSystemId, pRevisionId, pExtDeviceId;
+    NvU32 pBusId, pDeviceId, pSubSystemId, pRevisionId, pExtDeviceId, pValue;
     NV_DISPLAY_DRIVER_VERSION pVersion;
     pVersion.version = NV_DISPLAY_DRIVER_VERSION_VER;
     NV_GPU_ARCH_INFO pGpuArchInfo;
@@ -71,6 +73,7 @@ int main(int argc, char **argv)
     NvBus           = NvQueryInterface(0x1BB18724);
     NvPstate        = NvQueryInterface(0x60ded2ed);
     NvThermals      = NvQueryInterface(0xe3640a56);
+    NvTach          = NvQueryInterface(0x5f608315);
 
     NvInit();
     NvEnumGPUs(hdlGPU, &nGPU);
@@ -168,7 +171,12 @@ int main(int argc, char **argv)
       printf("GPU Max Temperature: %dC\n", pThermalSettings.sensor[0].defaultMaxTemp);
     }
     else printf("NvAPI_GPU_GetThermalSettings not available!\n");
-    NvUnload();
+    // This gets cpu fan speed in RPM. This is not available in nvml.
+    if(NvTach && NvTach(hdlGPU[0], &pValue) == NVAPI_OK){
+      printf("GPU Fan speed: %ldRPM\n", pValue);
+    }
+    else printf("NvAPI_GPU_GetTachReading not available!\n");
+     NvUnload();
 
     printf("Press ENTER to Continue\n");
     getchar();
