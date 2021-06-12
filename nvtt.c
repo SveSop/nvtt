@@ -19,6 +19,7 @@ typedef int (*NvAPI_Disp_GetHdrCapabilities_t)(int *handle, NV_HDR_CAPABILITIES 
 typedef int (*NvAPI_GPU_GetRamType_t)(int *handle, int *memtype);
 typedef int (*NvAPI_GPU_GetBusType_t)(int *handle, int *pBusType);
 typedef int (*NvAPI_GPU_GetDynamicPstatesInfoEx_t)(int *handle, NV_GPU_DYNAMIC_PSTATES_INFO_EX *pDynamicPstatesInfoEx);
+typedef int (*NvAPI_GPU_GetThermalSettings_t)(int *handle, NvU32 sensorIndex, NV_GPU_THERMAL_SETTINGS *pThermalSettings);
 
 NvAPI_QueryInterface_t NvQueryInterface = 0;
 NvAPI_Initialize_t NvInit = 0;
@@ -35,6 +36,7 @@ NvAPI_Disp_GetHdrCapabilities_t NvHDR = 0;
 NvAPI_GPU_GetRamType_t NvGetMemType = 0;
 NvAPI_GPU_GetBusType_t NvBus = 0;
 NvAPI_GPU_GetDynamicPstatesInfoEx_t NvPstate = 0;
+NvAPI_GPU_GetThermalSettings_t NvThermals = 0;
 
 int main(int argc, char **argv)
 {
@@ -50,6 +52,8 @@ int main(int argc, char **argv)
     pHdrCapabilities.version = NV_HDR_CAPABILITIES_VER;
     NV_GPU_DYNAMIC_PSTATES_INFO_EX pDynamicPstatesInfoEx;
     pDynamicPstatesInfoEx.version = NV_GPU_DYNAMIC_PSTATES_INFO_EX_VER;
+    NV_GPU_THERMAL_SETTINGS pThermalSettings;
+    pThermalSettings.version = NV_GPU_THERMAL_SETTINGS_VER;
 
     NvQueryInterface = (void*)GetProcAddress(LoadLibrary("nvapi.dll"), "nvapi_QueryInterface");
     NvInit          = NvQueryInterface(0x0150E828);
@@ -66,6 +70,7 @@ int main(int argc, char **argv)
     NvGetMemType    = NvQueryInterface(0x57F7CAAC);
     NvBus           = NvQueryInterface(0x1BB18724);
     NvPstate        = NvQueryInterface(0x60ded2ed);
+    NvThermals      = NvQueryInterface(0xe3640a56);
 
     NvInit();
     NvEnumGPUs(hdlGPU, &nGPU);
@@ -157,7 +162,12 @@ int main(int argc, char **argv)
       printf("Memory controller utilization: %ld%%\n", pDynamicPstatesInfoEx.utilization[1].percentage);
     }
     else printf("NvAPI_GPU_GetDynamicPstatesInfoEx not available!\n");
-
+    // This gets GPU temperatures.
+    if(NvThermals && NvThermals(hdlGPU[0], 0, &pThermalSettings) == NVAPI_OK){
+      printf("GPU Current Temperature: %dC\n", pThermalSettings.sensor[0].currentTemp);
+      printf("GPU Max Temperature: %dC\n", pThermalSettings.sensor[0].defaultMaxTemp);
+    }
+    else printf("NvAPI_GPU_GetThermalSettings not available!\n");
     NvUnload();
 
     printf("Press ENTER to Continue\n");
