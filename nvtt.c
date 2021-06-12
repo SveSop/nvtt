@@ -14,6 +14,7 @@ typedef int (*NvAPI_GPU_GetGPUType_t)(int *handle, int *pGpuType);
 typedef int (*NvAPI_GetDisplayDriverVersion_t)(int *handle, NV_DISPLAY_DRIVER_VERSION *pVersion);
 typedef int (*NvAPI_GPU_GetPhysicalFrameBufferSize_t)(int *handle, int *memsize);
 typedef int (*NvAPI_GPU_GetPCIIdentifiers_t)(int *handle, NvU32 *pDeviceId, NvU32 *pSubSystemId, NvU32 *pRevisionId, NvU32 *pExtDeviceId);
+typedef int (*NvAPI_GPU_GetArchInfo_t)(int *handle, NV_GPU_ARCH_INFO *pGpuArchInfo);
 
 NvAPI_QueryInterface_t NvQueryInterface = 0;
 NvAPI_Initialize_t NvInit = 0;
@@ -25,6 +26,7 @@ NvAPI_GPU_GetGPUType_t NvGPUType = 0;
 NvAPI_GetDisplayDriverVersion_t NvDriver = 0;
 NvAPI_GPU_GetPhysicalFrameBufferSize_t NvGetMemSize = 0;
 NvAPI_GPU_GetPCIIdentifiers_t NvPCIID = 0;
+NvAPI_GPU_GetArchInfo_t NvArch = 0;
 
 int main(int argc, char **argv)
 {
@@ -34,6 +36,8 @@ int main(int argc, char **argv)
     NvU32 pBusId, pDeviceId, pSubSystemId, pRevisionId, pExtDeviceId;
     NV_DISPLAY_DRIVER_VERSION pVersion;
     pVersion.version = NV_DISPLAY_DRIVER_VERSION_VER;
+    NV_GPU_ARCH_INFO pGpuArchInfo;
+    pGpuArchInfo.version = NV_GPU_ARCH_INFO_VER;
 
     NvAPI_Status ret = NVAPI_OK;
 
@@ -47,6 +51,7 @@ int main(int argc, char **argv)
     NvDriver        = NvQueryInterface(0xF951A4D1);
     NvGetMemSize    = NvQueryInterface(0x46FBEB03);
     NvPCIID         = NvQueryInterface(0x2ddfb66e);
+    NvArch          = NvQueryInterface(0xd8265d24);
 
     NvInit();
     NvEnumGPUs(hdlGPU, &nGPU);
@@ -89,6 +94,11 @@ int main(int argc, char **argv)
       printf("Subdevice ID: %04X-%04X\n", subdev, subven);
       printf("Revision ID: %lX\n", pRevisionId);
       printf("Ext Device ID: %lX\n", pExtDeviceId);
+    }
+    ret = NvArch(hdlGPU[0], &pGpuArchInfo);
+    if(ret == NVAPI_OK){
+      printf("Architecture: %ld\n", pGpuArchInfo.architecture);
+      printf("Revision: %ld\n", pGpuArchInfo.revision);
     }
     NvUnload();
 
