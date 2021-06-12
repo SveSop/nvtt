@@ -18,6 +18,7 @@ typedef int (*NvAPI_GPU_GetArchInfo_t)(int *handle, NV_GPU_ARCH_INFO *pGpuArchIn
 typedef int (*NvAPI_Disp_GetHdrCapabilities_t)(int *handle, NV_HDR_CAPABILITIES *pHdrCapabilities);
 typedef int (*NvAPI_GPU_GetRamType_t)(int *handle, int *memtype);
 typedef int (*NvAPI_GPU_GetBusType_t)(int *handle, int *pBusType);
+typedef int (*NvAPI_GPU_GetDynamicPstatesInfoEx_t)(int *handle, NV_GPU_DYNAMIC_PSTATES_INFO_EX *pDynamicPstatesInfoEx);
 
 NvAPI_QueryInterface_t NvQueryInterface = 0;
 NvAPI_Initialize_t NvInit = 0;
@@ -33,6 +34,7 @@ NvAPI_GPU_GetArchInfo_t NvArch = 0;
 NvAPI_Disp_GetHdrCapabilities_t NvHDR = 0;
 NvAPI_GPU_GetRamType_t NvGetMemType = 0;
 NvAPI_GPU_GetBusType_t NvBus = 0;
+NvAPI_GPU_GetDynamicPstatesInfoEx_t NvPstate = 0;
 
 int main(int argc, char **argv)
 {
@@ -46,6 +48,8 @@ int main(int argc, char **argv)
     pGpuArchInfo.version = NV_GPU_ARCH_INFO_VER;
     NV_HDR_CAPABILITIES pHdrCapabilities;
     pHdrCapabilities.version = NV_HDR_CAPABILITIES_VER;
+    NV_GPU_DYNAMIC_PSTATES_INFO_EX pDynamicPstatesInfoEx;
+    pDynamicPstatesInfoEx.version = NV_GPU_DYNAMIC_PSTATES_INFO_EX_VER;
 
     NvQueryInterface = (void*)GetProcAddress(LoadLibrary("nvapi.dll"), "nvapi_QueryInterface");
     NvInit          = NvQueryInterface(0x0150E828);
@@ -61,6 +65,7 @@ int main(int argc, char **argv)
     NvHDR           = NvQueryInterface(0x84f2a8df);
     NvGetMemType    = NvQueryInterface(0x57F7CAAC);
     NvBus           = NvQueryInterface(0x1BB18724);
+    NvPstate        = NvQueryInterface(0x60ded2ed);
 
     NvInit();
     NvEnumGPUs(hdlGPU, &nGPU);
@@ -146,6 +151,13 @@ int main(int argc, char **argv)
       }
     }
     else printf("NvAPI_GPU_GetBusType is not available!\n");
+    // This gets GPU and memory controller utilization
+    if(NvPstate && NvPstate(hdlGPU[0], &pDynamicPstatesInfoEx) == NVAPI_OK){
+      printf("GPU utilization: %ld%%\n", pDynamicPstatesInfoEx.utilization[0].percentage);
+      printf("Memory controller utilization: %ld%%\n", pDynamicPstatesInfoEx.utilization[1].percentage);
+    }
+    else printf("NvAPI_GPU_GetDynamicPstatesInfoEx not available!\n");
+
     NvUnload();
 
     printf("Press ENTER to Continue\n");
