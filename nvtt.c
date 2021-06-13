@@ -120,6 +120,7 @@ int main(int argc, char **argv)
     if(NvGetBiosName && NvGetBiosName(hdlGPU[i], biosname) == NVAPI_OK){
       printf("BIOS version: %s\n", biosname);
     }
+    else printf("NvAPI_GPU_GetVbiosVersionString not available!\n");
     // Get BusID
     if(BusId && BusId(hdlGPU[i], &pBusId) == NVAPI_OK){
       printf("BusId: %ld\n", pBusId);
