@@ -21,6 +21,7 @@ typedef int (*NvAPI_GPU_GetBusType_t)(int *handle, int *pBusType);
 typedef int (*NvAPI_GPU_GetDynamicPstatesInfoEx_t)(int *handle, NV_GPU_DYNAMIC_PSTATES_INFO_EX *pDynamicPstatesInfoEx);
 typedef int (*NvAPI_GPU_GetThermalSettings_t)(int *handle, NvU32 sensorIndex, NV_GPU_THERMAL_SETTINGS *pThermalSettings);
 typedef int (*NvAPI_GPU_GetTachReading_t)(int *handle, NvU32 *pValue);
+typedef int (*NvAPI_GPU_GetVbiosVersionString_t)(int *handle, char *biosname);
 
 NvAPI_QueryInterface_t NvQueryInterface = 0;
 NvAPI_Initialize_t NvInit = 0;
@@ -39,12 +40,13 @@ NvAPI_GPU_GetBusType_t NvBus = 0;
 NvAPI_GPU_GetDynamicPstatesInfoEx_t NvPstate = 0;
 NvAPI_GPU_GetThermalSettings_t NvThermals = 0;
 NvAPI_GPU_GetTachReading_t NvTach = 0;
+NvAPI_GPU_GetVbiosVersionString_t NvGetBiosName = 0;
 
 int main(int argc, char **argv)
 {
     int i=0, nGPU=0, pGpuType=0, memsize=0, memtype=0, pBusType=0;
     int *hdlGPU[NVAPI_MAX_PHYSICAL_GPUS]={0}, *hdlDisp[NVAPI_MAX_DISPLAYS]={0};
-    NvAPI_ShortString sysname;
+    NvAPI_ShortString sysname, biosname;
     NvU32 pBusId, pDeviceId, pSubSystemId, pRevisionId, pExtDeviceId, pValue;
     NV_DISPLAY_DRIVER_VERSION pVersion;
     pVersion.version = NV_DISPLAY_DRIVER_VERSION_VER;
@@ -74,6 +76,7 @@ int main(int argc, char **argv)
     NvPstate        = NvQueryInterface(0x60ded2ed);
     NvThermals      = NvQueryInterface(0xe3640a56);
     NvTach          = NvQueryInterface(0x5f608315);
+    NvGetBiosName   = NvQueryInterface(0xA561FD7D);
 
     NvInit();
     NvEnumGPUs(hdlGPU, &nGPU);
@@ -113,6 +116,10 @@ int main(int argc, char **argv)
       printf("Name: %s\n", sysname);
     }
     else printf("NvAPI_GPU_GetFullName not available!\n");
+    // Get the bios version info.
+    if(NvGetBiosName && NvGetBiosName(hdlGPU[i], biosname) == NVAPI_OK){
+      printf("BIOS version: %s\n", biosname);
+    }
     // Get BusID
     if(BusId && BusId(hdlGPU[i], &pBusId) == NVAPI_OK){
       printf("BusId: %ld\n", pBusId);
