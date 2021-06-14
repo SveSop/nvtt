@@ -22,6 +22,7 @@ typedef int (*NvAPI_GPU_GetDynamicPstatesInfoEx_t)(int *handle, NV_GPU_DYNAMIC_P
 typedef int (*NvAPI_GPU_GetThermalSettings_t)(int *handle, NvU32 sensorIndex, NV_GPU_THERMAL_SETTINGS *pThermalSettings);
 typedef int (*NvAPI_GPU_GetTachReading_t)(int *handle, NvU32 *pValue);
 typedef int (*NvAPI_GPU_GetVbiosVersionString_t)(int *handle, char *biosname);
+typedef int (*NvAPI_GPU_GetAllClockFrequencies_t)(int *handle, NV_GPU_CLOCK_FREQUENCIES *pClkFreqs);
 
 NvAPI_QueryInterface_t NvQueryInterface = 0;
 NvAPI_Initialize_t NvInit = 0;
@@ -41,6 +42,7 @@ NvAPI_GPU_GetDynamicPstatesInfoEx_t NvPstate = 0;
 NvAPI_GPU_GetThermalSettings_t NvThermals = 0;
 NvAPI_GPU_GetTachReading_t NvTach = 0;
 NvAPI_GPU_GetVbiosVersionString_t NvGetBiosName = 0;
+NvAPI_GPU_GetAllClockFrequencies_t NvClkfq = 0;
 
 int main(int argc, char **argv)
 {
@@ -58,6 +60,8 @@ int main(int argc, char **argv)
     pDynamicPstatesInfoEx.version = NV_GPU_DYNAMIC_PSTATES_INFO_EX_VER;
     NV_GPU_THERMAL_SETTINGS pThermalSettings;
     pThermalSettings.version = NV_GPU_THERMAL_SETTINGS_VER;
+    NV_GPU_CLOCK_FREQUENCIES pClkFreqs;
+    pClkFreqs.version = NV_GPU_CLOCK_FREQUENCIES_VER;
 
     NvQueryInterface = (void*)GetProcAddress(LoadLibrary("nvapi.dll"), "nvapi_QueryInterface");
     NvInit          = NvQueryInterface(0x0150E828);
@@ -77,6 +81,7 @@ int main(int argc, char **argv)
     NvThermals      = NvQueryInterface(0xe3640a56);
     NvTach          = NvQueryInterface(0x5f608315);
     NvGetBiosName   = NvQueryInterface(0xA561FD7D);
+    NvClkfq         = NvQueryInterface(0xdcb616c3);
 
     NvInit();
     NvEnumGPUs(hdlGPU, &nGPU);
@@ -194,6 +199,26 @@ int main(int argc, char **argv)
       printf("GPU Fan speed: %ldRPM\n", pValue);
     }
     else printf("NvAPI_GPU_GetTachReading not available!\n");
+    // Get GPU clockfrequencies from adapter
+    for(int c = 0; c < 2; c++){
+      switch(c){
+        case 0: pClkFreqs.ClockType = NV_GPU_CLOCK_FREQUENCIES_CURRENT_FREQ;
+          if(NvClkfq && NvClkfq(hdlGPU[i], &pClkFreqs) == NVAPI_OK){
+          printf("GPU Current clock: %ldMHz\n", (pClkFreqs.domain[0].frequency / 1000)); break;
+          }
+          else{
+            printf("NvAPI_GPU_GetAllClockFrequencies not available!\n"); break;
+          }
+        case 1: pClkFreqs.ClockType = NV_GPU_CLOCK_FREQUENCIES_BOOST_CLOCK;
+          if(NvClkfq && NvClkfq(hdlGPU[i], &pClkFreqs) == NVAPI_OK){
+          printf("GPU base clock: %ldMHz\n", (pClkFreqs.domain[0].frequency / 1000)); break;
+          }
+          else{
+            printf("NvAPI_GPU_GetAllClockFrequencies not available!\n");
+            break;
+          }
+      }
+    }
   }
 
   printf("-----------------------\nGeneral info for all adapters\n-----------------------\n");
