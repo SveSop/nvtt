@@ -207,14 +207,14 @@ int main(int argc, char **argv)
           printf("GPU Current clock: %ldMHz\n", (pClkFreqs.domain[NVAPI_GPU_PUBLIC_CLOCK_GRAPHICS].frequency / 1000)); break;
           }
           else{
-            printf("NvAPI_GPU_GetAllClockFrequencies not available!\n"); break;
+            printf("NvAPI_GPU_GetAllClockFrequencies GPU CURRENT_FREQ not available!\n"); break;
           }
         case 1: pClkFreqs.ClockType = NV_GPU_CLOCK_FREQUENCIES_BOOST_CLOCK;
           if(NvClkfq && NvClkfq(hdlGPU[i], &pClkFreqs) == NVAPI_OK){
           printf("GPU boost clock: %ldMHz\n", (pClkFreqs.domain[NVAPI_GPU_PUBLIC_CLOCK_GRAPHICS].frequency / 1000)); break;
           }
           else{
-            printf("NvAPI_GPU_GetAllClockFrequencies not available!\n");
+            printf("NvAPI_GPU_GetAllClockFrequencies GPU BOOST_CLOCK not available!\n");
             break;
           }
       }
@@ -224,13 +224,13 @@ int main(int argc, char **argv)
     if(NvClkfq && NvClkfq(hdlGPU[i], &pClkFreqs) == NVAPI_OK){
       printf("Memory Current clock: %ldMHz\n", (pClkFreqs.domain[NVAPI_GPU_PUBLIC_CLOCK_MEMORY].frequency / 1000));
     }
-    else printf("NvAPI_GPU_GetAllClockFrequencies not available!\n");
+    else printf("NvAPI_GPU_GetAllClockFrequencies MEMORY not available!\n");
     // Get video clock from adapter
     pClkFreqs.ClockType = NV_GPU_CLOCK_FREQUENCIES_CURRENT_FREQ;
     if(NvClkfq && NvClkfq(hdlGPU[i], &pClkFreqs) == NVAPI_OK){
       printf("Video Current clock: %ldMHz\n", (pClkFreqs.domain[NVAPI_GPU_PUBLIC_CLOCK_VIDEO].frequency / 1000));
     }
-    else printf("NvAPI_GPU_GetAllClockFrequencies not available!\n");
+    else printf("NvAPI_GPU_GetAllClockFrequencies VIDEO not available!\n");
   }
 
   printf("-----------------------\nGeneral info for all adapters\n-----------------------\n");
