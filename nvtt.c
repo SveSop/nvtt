@@ -3,6 +3,7 @@
 #include <windows.h>
 #include <stdint.h>
 #include "nvapi.h"
+#include "nvapi_xtra.h"
 
 typedef void *(*NvAPI_QueryInterface_t)(unsigned int offset);
 typedef int (*NvAPI_Initialize_t)();
@@ -23,6 +24,7 @@ typedef int (*NvAPI_GPU_GetThermalSettings_t)(int *handle, NvU32 sensorIndex, NV
 typedef int (*NvAPI_GPU_GetTachReading_t)(int *handle, NvU32 *pValue);
 typedef int (*NvAPI_GPU_GetVbiosVersionString_t)(int *handle, char *biosname);
 typedef int (*NvAPI_GPU_GetAllClockFrequencies_t)(int *handle, NV_GPU_CLOCK_FREQUENCIES *pClkFreqs);
+typedef int (*NvAPI_GPU_GetCoolerSettings_t)(int *handle, NvU32 coolerIndex, NV_GPU_COOLER_SETTINGS *pCoolerInfo);
 
 NvAPI_QueryInterface_t NvQueryInterface = 0;
 NvAPI_Initialize_t NvInit = 0;
@@ -43,6 +45,7 @@ NvAPI_GPU_GetThermalSettings_t NvThermals = 0;
 NvAPI_GPU_GetTachReading_t NvTach = 0;
 NvAPI_GPU_GetVbiosVersionString_t NvGetBiosName = 0;
 NvAPI_GPU_GetAllClockFrequencies_t NvClkfq = 0;
+NvAPI_GPU_GetCoolerSettings_t NvCooler = 0;
 
 int main(int argc, char **argv)
 {
@@ -62,6 +65,8 @@ int main(int argc, char **argv)
     pThermalSettings.version = NV_GPU_THERMAL_SETTINGS_VER;
     NV_GPU_CLOCK_FREQUENCIES pClkFreqs;
     pClkFreqs.version = NV_GPU_CLOCK_FREQUENCIES_VER;
+    NV_GPU_COOLER_SETTINGS pCoolerInfo;
+    pCoolerInfo.version = NV_GPU_COOLER_SETTINGS_VER;
 
     NvQueryInterface = (void*)GetProcAddress(LoadLibrary("nvapi.dll"), "nvapi_QueryInterface");
     NvInit          = NvQueryInterface(0x0150E828);
@@ -82,6 +87,7 @@ int main(int argc, char **argv)
     NvTach          = NvQueryInterface(0x5f608315);
     NvGetBiosName   = NvQueryInterface(0xA561FD7D);
     NvClkfq         = NvQueryInterface(0xdcb616c3);
+    NvCooler        = NvQueryInterface(0xda141340);
 
     NvInit();
     NvEnumGPUs(hdlGPU, &nGPU);
@@ -199,6 +205,16 @@ int main(int argc, char **argv)
       printf("GPU Fan speed: %ldRPM\n", pValue);
     }
     else printf("NvAPI_GPU_GetTachReading not available!\n");
+    // Get cooler information from adapter. Fan speed in %.
+    if(NvCooler && NvCooler(hdlGPU[i], NVAPI_COOLER_TARGET_ALL, &pCoolerInfo) == NVAPI_OK){
+      printf("GPU cooler load: %ld%%\n", pCoolerInfo.cooler[NVAPI_COOLER_TARGET_NONE].currentLevel);
+      // I dont really know the values for water/liquid or fan, so i assume fan if there is one
+      if(pCoolerInfo.cooler[NVAPI_COOLER_TARGET_NONE].type != 0){
+        printf("GPU cooler type: FAN\n");
+      }
+      else printf("GPU cooler type: NONE!\n");
+    }
+    else printf("NvAPI_GPU_GetCoolerSettings not available!\n");
     // Get all clockfrequencies from adapter - gpu, memory and video.
     for(int c = 0; c < 2; c++){
       switch(c){
