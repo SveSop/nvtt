@@ -68,12 +68,11 @@ int main(int argc, char **argv)
     NV_GPU_COOLER_SETTINGS pCoolerInfo;
     pCoolerInfo.version = NV_GPU_COOLER_SETTINGS_VER;
 
-    if(LoadLibrary && LoadLibrary("nvapi.dll") == NULL){
+    NvQueryInterface = (void*)GetProcAddress(LoadLibrary("nvapi.dll"), "nvapi_QueryInterface");
+    if(NvQueryInterface == NULL){
       printf("nvAPI interface not available!\n");
       return 0;
     }
-
-    NvQueryInterface = (void*)GetProcAddress(LoadLibrary("nvapi.dll"), "nvapi_QueryInterface");
     NvInit          = NvQueryInterface(0x0150E828);
     NvUnload        = NvQueryInterface(0xD22BDD7E);
     NvEnumGPUs      = NvQueryInterface(0xE5AC921F);
