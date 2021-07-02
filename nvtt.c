@@ -25,6 +25,7 @@ typedef int (*NvAPI_GPU_GetTachReading_t)(int *handle, NvU32 *pValue);
 typedef int (*NvAPI_GPU_GetVbiosVersionString_t)(int *handle, char *biosname);
 typedef int (*NvAPI_GPU_GetAllClockFrequencies_t)(int *handle, NV_GPU_CLOCK_FREQUENCIES *pClkFreqs);
 typedef int (*NvAPI_GPU_GetCoolerSettings_t)(int *handle, NvU32 coolerIndex, NV_GPU_COOLER_SETTINGS *pCoolerInfo);
+typedef int (*NvAPI_SYS_GetDisplayDriverInfo_t)(NV_DISPLAY_DRIVER_INFO *pDriverInfo);
 
 NvAPI_QueryInterface_t NvQueryInterface = 0;
 NvAPI_Initialize_t NvInit = 0;
@@ -46,6 +47,7 @@ NvAPI_GPU_GetTachReading_t NvTach = 0;
 NvAPI_GPU_GetVbiosVersionString_t NvGetBiosName = 0;
 NvAPI_GPU_GetAllClockFrequencies_t NvClkfq = 0;
 NvAPI_GPU_GetCoolerSettings_t NvCooler = 0;
+NvAPI_SYS_GetDisplayDriverInfo_t NvDrvInfo = 0;
 
 int main(int argc, char **argv)
 {
@@ -67,6 +69,8 @@ int main(int argc, char **argv)
     pClkFreqs.version = NV_GPU_CLOCK_FREQUENCIES_VER;
     NV_GPU_COOLER_SETTINGS pCoolerInfo;
     pCoolerInfo.version = NV_GPU_COOLER_SETTINGS_VER;
+    NV_DISPLAY_DRIVER_INFO pDriverInfo;
+    pDriverInfo.version = NV_DISPLAY_DRIVER_INFO_VER;
 
     NvQueryInterface = (void*)GetProcAddress(LoadLibrary("nvapi.dll"), "nvapi_QueryInterface");
     if(NvQueryInterface == NULL){
@@ -92,6 +96,7 @@ int main(int argc, char **argv)
     NvGetBiosName   = NvQueryInterface(0xA561FD7D);
     NvClkfq         = NvQueryInterface(0xdcb616c3);
     NvCooler        = NvQueryInterface(0xda141340);
+    NvDrvInfo       = NvQueryInterface(0x721faceb);
 
     NvInit();
     NvEnumGPUs(hdlGPU, &nGPU);
@@ -108,9 +113,15 @@ int main(int argc, char **argv)
       printf("Display Driver Branch: %s\n", pVersion.szBuildBranchString);
       printf("Adapter name: %s\n", pVersion.szAdapterString);
     }
-    else{
-      printf("Unable to obtain display driver info and adaptername!\n");
+    else printf("Unable to obtain display driver info and adaptername!\n");
+    // Get type of driver
+    if(NvDrvInfo && NvDrvInfo(&pDriverInfo) == NVAPI_OK){
+      if(pDriverInfo.bIsNVIDIAStudioPackage == 1) printf("Nvidia Studio branch.\n");
+      else if(pDriverInfo.bIsNVIDIAGameReadyPackage == 1) printf("Nvidia GameReady branch.\n");
+      else if(pDriverInfo.bIsNVIDIARTXProductionBranchPackage == 1) printf("Nvidia RTX Production branch.\n");
+      else if(pDriverInfo.bIsNVIDIARTXNewFeatureBranchPackage == 1) printf("Nvidia RTX New Feature branch.\n");
     }
+    else printf("NvAPI_SYS_GetDisplayDriverInfo not available!\n");
     // Check for HDR capabilities. DXVK does currently not support this. Is this "driver related only"?
     if(NvHDR && NvHDR(hdlDisp[0], &pHdrCapabilities) == NVAPI_OK){
       printf("GPU HDR Capabilities:\n");
