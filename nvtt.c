@@ -109,7 +109,10 @@ int main(int argc, char **argv)
     // Driver version and branchstring. nVidia uses rxxx_xx for "branch". This is afaik not
     // reported very well in Linux drivers, so it will usually be a "faked" number.
     if(NvDriver && NvDriver(hdlDisp[0], &pVersion) == NVAPI_OK){
-      printf("Display Driver Version: %ld\n", pVersion.drvVersion);
+      if(pVersion.drvVersion > 99999){
+        printf("Display Driver Version: %ld.%.2ld.%.2ld\n", (pVersion.drvVersion / 10000), ((pVersion.drvVersion % 10000) / 100), (pVersion.drvVersion % 100));
+      }
+      else printf("Display Driver Version: %ld.%.2ld\n", (pVersion.drvVersion / 100), (pVersion.drvVersion % 100));
       printf("Display Driver Branch: %s\n", pVersion.szBuildBranchString);
       printf("Adapter name: %s\n", pVersion.szAdapterString);
     }
