@@ -114,4 +114,21 @@ typedef struct _NV_GPU_COOLER_SETTINGS
 typedef NvAPI_Status (WINAPIV *_NvAPI_GPU_GetCoolerSettings)(_In_ NvPhysicalGpuHandle hPhysicalGpu, NvU32 coolerIndex, NV_GPU_COOLER_SETTINGS* pCoolerInfo);
 _NvAPI_GPU_GetCoolerSettings NvAPI_GPU_GetCoolerSettings;
 
+//! Undocumented structure in use for cuda
+typedef struct
+{
+    NvU32 version;
+    NvU32 gpu_count;
+    struct
+    {
+        NvPhysicalGpuHandle gpuHandle;
+        NvU32 GetGPUIDfromPhysicalGPU;
+    } gpus[8];
+}NV_CUDA_V1;
+
+typedef NV_CUDA_V1     NV_CUDA;
+
+#define NV_CUDA_V1_VER MAKE_NVAPI_VERSION(NV_CUDA_V1, 1)
+#define NV_CUDA_VER  NV_CUDA_V1_VER
+
 #endif /* __NVAPI_XTRA_H */

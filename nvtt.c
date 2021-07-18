@@ -26,6 +26,7 @@ typedef int (*NvAPI_GPU_GetVbiosVersionString_t)(int *handle, char *biosname);
 typedef int (*NvAPI_GPU_GetAllClockFrequencies_t)(int *handle, NV_GPU_CLOCK_FREQUENCIES *pClkFreqs);
 typedef int (*NvAPI_GPU_GetCoolerSettings_t)(int *handle, NvU32 coolerIndex, NV_GPU_COOLER_SETTINGS *pCoolerInfo);
 typedef int (*NvAPI_SYS_GetDisplayDriverInfo_t)(NV_DISPLAY_DRIVER_INFO *pDriverInfo);
+typedef int (*NvAPI_GPU_CudaEnumComputeCapableGpus_t)(NV_CUDA *pParam);
 
 NvAPI_QueryInterface_t NvQueryInterface = 0;
 NvAPI_Initialize_t NvInit = 0;
@@ -48,6 +49,7 @@ NvAPI_GPU_GetVbiosVersionString_t NvGetBiosName = 0;
 NvAPI_GPU_GetAllClockFrequencies_t NvClkfq = 0;
 NvAPI_GPU_GetCoolerSettings_t NvCooler = 0;
 NvAPI_SYS_GetDisplayDriverInfo_t NvDrvInfo = 0;
+NvAPI_GPU_CudaEnumComputeCapableGpus_t NvCuda = 0;
 
 int main(int argc, char **argv)
 {
@@ -71,6 +73,8 @@ int main(int argc, char **argv)
     pCoolerInfo.version = NV_GPU_COOLER_SETTINGS_VER;
     NV_DISPLAY_DRIVER_INFO pDriverInfo;
     pDriverInfo.version = NV_DISPLAY_DRIVER_INFO_VER;
+    NV_CUDA pParam;
+    pParam.version = NV_CUDA_VER;
 
     NvQueryInterface = (void*)GetProcAddress(LoadLibrary("nvapi.dll"), "nvapi_QueryInterface");
     if(NvQueryInterface == NULL){
@@ -97,6 +101,7 @@ int main(int argc, char **argv)
     NvClkfq         = NvQueryInterface(0xdcb616c3);
     NvCooler        = NvQueryInterface(0xda141340);
     NvDrvInfo       = NvQueryInterface(0x721faceb);
+    NvCuda          = NvQueryInterface(0x5786cc6e);
 
     NvInit();
     NvEnumGPUs(hdlGPU, &nGPU);
@@ -195,6 +200,13 @@ int main(int argc, char **argv)
       printf("Onboard memory type: GDDR%d\n", memtype<=8?5:6);
     }
     else printf("NvAPI_GPU_GetRamType is not available!\n");
+    // Get Cuda capable GPU's
+    if(NvCuda && NvCuda(&pParam) == NVAPI_OK){
+      printf("Cuda Adapter count: %ld\n", pParam.gpu_count);
+      printf("Cuda GPU handle: %p\n", pParam.gpus[0].gpuHandle);
+      printf("Cuda GPUID: %ld\n", pParam.gpus[0].GetGPUIDfromPhysicalGPU);
+    }
+    else printf("NvAPI_GPU_CudaEnumComputeCapableGpus is not available!\n");
     // Get type of bus interface for adapter.
     if(NvBus && NvBus(hdlGPU[i], &pBusType) == NVAPI_OK){
       switch(pBusType){
