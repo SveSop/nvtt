@@ -27,6 +27,8 @@ typedef int (*NvAPI_GPU_GetAllClockFrequencies_t)(int *handle, NV_GPU_CLOCK_FREQ
 typedef int (*NvAPI_GPU_GetCoolerSettings_t)(int *handle, NvU32 coolerIndex, NV_GPU_COOLER_SETTINGS *pCoolerInfo);
 typedef int (*NvAPI_SYS_GetDisplayDriverInfo_t)(NV_DISPLAY_DRIVER_INFO *pDriverInfo);
 typedef int (*NvAPI_GPU_CudaEnumComputeCapableGpus_t)(NV_CUDA *pParam);
+typedef int (*NvAPI_GetGPUIDfromPhysicalGPU_t)(int *handle, NvU32 *retHandle);
+typedef int (*NvAPI_GetPhysicalGPUFromGPUID_t)(int *handle, NvU32 *retHandle);
 
 NvAPI_QueryInterface_t NvQueryInterface = 0;
 NvAPI_Initialize_t NvInit = 0;
@@ -50,13 +52,15 @@ NvAPI_GPU_GetAllClockFrequencies_t NvClkfq = 0;
 NvAPI_GPU_GetCoolerSettings_t NvCooler = 0;
 NvAPI_SYS_GetDisplayDriverInfo_t NvDrvInfo = 0;
 NvAPI_GPU_CudaEnumComputeCapableGpus_t NvCuda = 0;
+NvAPI_GetGPUIDfromPhysicalGPU_t NvGpuUid = 0;
+NvAPI_GetPhysicalGPUFromGPUID_t NvGpuPhys = 0;
 
 int main(int argc, char **argv)
 {
     int i=0, nGPU=0, pGpuType=0, memsize=0, memtype=0, pBusType=0;
-    int *hdlGPU[NVAPI_MAX_PHYSICAL_GPUS]={0}, *hdlDisp[NVAPI_MAX_DISPLAYS]={0};
+    int *hdlGPU[NVAPI_MAX_PHYSICAL_GPUS]={0}, *hdlDisp[NVAPI_MAX_DISPLAYS]={0}, *physHandle[NVAPI_MAX_PHYSICAL_GPUS]={0};
     NvAPI_ShortString sysname, biosname;
-    NvU32 pBusId, pDeviceId, pSubSystemId, pRevisionId, pExtDeviceId, pValue;
+    NvU32 pBusId=0, pDeviceId=0, pSubSystemId=0, pRevisionId=0, pExtDeviceId=0, pValue=0, retHandle=0;
     NV_DISPLAY_DRIVER_VERSION pVersion;
     pVersion.version = NV_DISPLAY_DRIVER_VERSION_VER;
     NV_GPU_ARCH_INFO pGpuArchInfo;
@@ -102,6 +106,8 @@ int main(int argc, char **argv)
     NvCooler        = NvQueryInterface(0xda141340);
     NvDrvInfo       = NvQueryInterface(0x721faceb);
     NvCuda          = NvQueryInterface(0x5786cc6e);
+    NvGpuUid        = NvQueryInterface(0x6533ea3e);
+    NvGpuPhys       = NvQueryInterface(0x5380ad1a);
 
     NvInit();
     NvEnumGPUs(hdlGPU, &nGPU);
@@ -207,6 +213,17 @@ int main(int argc, char **argv)
       printf("Cuda GPUID: %ld\n", pParam.gpus[0].GetGPUIDfromPhysicalGPU);
     }
     else printf("NvAPI_GPU_CudaEnumComputeCapableGpus is not available!\n");
+    // Get GPUuid from physical GPU
+    if(NvGpuUid && NvGpuUid(hdlGPU[i], &retHandle) == NVAPI_OK){
+      printf("GPU handle: %p, have GPU id: %p\n", hdlGPU[i], (void *)retHandle);
+    }
+    else printf("NvAPI_GetGPUIDfromPhysicalGPU is not available!\n");
+    // Get physical GPU from GPUuid
+    physHandle[i] = (void *)retHandle;
+    if(NvGpuPhys && NvGpuPhys(physHandle[i], &retHandle) == NVAPI_OK){
+      printf("GPU id: %p, have GPU handle: %p\n", (void *)retHandle, physHandle[i]);
+    }
+    else printf("NvAPI_GetPhysicalGPUFromGPUID is not available!\n");
     // Get type of bus interface for adapter.
     if(NvBus && NvBus(hdlGPU[i], &pBusType) == NVAPI_OK){
       switch(pBusType){
