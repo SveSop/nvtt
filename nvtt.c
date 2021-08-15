@@ -58,9 +58,9 @@ NvAPI_GetPhysicalGPUFromGPUID_t NvGpuPhys = 0;
 int main(int argc, char **argv)
 {
     int i=0, nGPU=0, pGpuType=0, memsize=0, memtype=0, pBusType=0;
-    int *hdlGPU[NVAPI_MAX_PHYSICAL_GPUS]={0}, *hdlDisp[NVAPI_MAX_DISPLAYS]={0}, *physHandle[NVAPI_MAX_PHYSICAL_GPUS]={0};
+    int *hdlGPU[NVAPI_MAX_PHYSICAL_GPUS]={0}, *hdlDisp[NVAPI_MAX_DISPLAYS]={0};
     NvAPI_ShortString sysname, biosname;
-    NvU32 pBusId=0, pDeviceId=0, pSubSystemId=0, pRevisionId=0, pExtDeviceId=0, pValue=0, retHandle=0;
+    NvU32 pBusId=0, pDeviceId=0, pSubSystemId=0, pRevisionId=0, pExtDeviceId=0, pValue=0, retHandle=0, physHandle=0;
     NV_DISPLAY_DRIVER_VERSION pVersion;
     pVersion.version = NV_DISPLAY_DRIVER_VERSION_VER;
     NV_GPU_ARCH_INFO pGpuArchInfo;
@@ -215,13 +215,12 @@ int main(int argc, char **argv)
     else printf("NvAPI_GPU_CudaEnumComputeCapableGpus is not available!\n");
     // Get GPUuid from physical GPU
     if(NvGpuUid && NvGpuUid(hdlGPU[i], &retHandle) == NVAPI_OK){
-      printf("GPU handle: %p, have GPU id: %p\n", hdlGPU[i], (void *)retHandle);
+      printf("GPU handle: %p, have GPU id: %ld\n", hdlGPU[i], retHandle);
     }
     else printf("NvAPI_GetGPUIDfromPhysicalGPU is not available!\n");
     // Get physical GPU from GPUuid
-    physHandle[i] = (void *)retHandle;
-    if(NvGpuPhys && NvGpuPhys(physHandle[i], &retHandle) == NVAPI_OK){
-      printf("GPU id: %p, have GPU handle: %p\n", (void *)retHandle, physHandle[i]);
+    if(NvGpuPhys && NvGpuPhys((void *)retHandle, &physHandle) == NVAPI_OK){
+      printf("GPU id: %ld, have GPU handle: %p\n", retHandle, (void *)physHandle);
     }
     else printf("NvAPI_GetPhysicalGPUFromGPUID is not available!\n");
     // Get type of bus interface for adapter.
