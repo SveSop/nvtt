@@ -147,6 +147,15 @@ int main(int argc, char **argv)
       printf("  DolbyVisionSupport:         %s\n", pHdrCapabilities.isDolbyVisionSupported?"true":"false");
     }
     else printf("NvAPI_Disp_GetHdrCapabilities not supported!\n");
+    // Get Cuda capable GPU's
+    if(NvCuda && NvCuda(&pParam) == NVAPI_OK){
+      printf("\nCuda:\nNumber of Cuda adapters: %ld\n", pParam.gpu_count);
+      for(int u = 0; u < (pParam.gpu_count); u++){
+        printf("  ->Cuda GPU handle of adapter %d: %p\n", u, pParam.gpus[u].gpuHandle);
+        printf("  ->Cuda GPUID of adapter %d: %ld\n", u, pParam.gpus[u].GetGPUIDfromPhysicalGPU);
+      }
+    }
+    else printf("NvAPI_GPU_CudaEnumComputeCapableGpus is not available!\n");
   }
 
   void info()
@@ -206,13 +215,6 @@ int main(int argc, char **argv)
       printf("Onboard memory type: GDDR%d\n", memtype<=8?5:6);
     }
     else printf("NvAPI_GPU_GetRamType is not available!\n");
-    // Get Cuda capable GPU's
-    if(NvCuda && NvCuda(&pParam) == NVAPI_OK){
-      printf("Cuda Adapter count: %ld\n", pParam.gpu_count);
-      printf("Cuda GPU handle: %p\n", pParam.gpus[0].gpuHandle);
-      printf("Cuda GPUID: %ld\n", pParam.gpus[0].GetGPUIDfromPhysicalGPU);
-    }
-    else printf("NvAPI_GPU_CudaEnumComputeCapableGpus is not available!\n");
     // Get GPUuid from physical GPU
     if(NvGpuUid && NvGpuUid(hdlGPU[i], &retHandle) == NVAPI_OK){
       printf("GPU handle: %p, have GPU id: %ld\n", hdlGPU[i], retHandle);
