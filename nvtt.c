@@ -30,6 +30,7 @@ typedef int (*NvAPI_GPU_CudaEnumComputeCapableGpus_t)(NV_CUDA *pParam);
 typedef int (*NvAPI_GetGPUIDfromPhysicalGPU_t)(int *handle, NvU32 *retHandle);
 typedef int (*NvAPI_GetPhysicalGPUFromGPUID_t)(int *handle, NvU32 *retHandle);
 typedef int (*NvAPI_GPU_GetCurrentPstate_t)(int *handle, NV_GPU_PERF_PSTATE_ID *pCurrentPstate);
+typedef int (*NvAPI_GPU_GetPstates20_t)(int *handle, NV_GPU_PERF_PSTATES20_INFO *pPstatesInfo);
 
 NvAPI_QueryInterface_t NvQueryInterface = 0;
 NvAPI_Initialize_t NvInit = 0;
@@ -56,6 +57,7 @@ NvAPI_GPU_CudaEnumComputeCapableGpus_t NvCuda = 0;
 NvAPI_GetGPUIDfromPhysicalGPU_t NvGpuUid = 0;
 NvAPI_GetPhysicalGPUFromGPUID_t NvGpuPhys = 0;
 NvAPI_GPU_GetCurrentPstate_t NvPerfState = 0;
+NvAPI_GPU_GetPstates20_t NvPerf20 = 0;
 
 int main(int argc, char **argv)
 {
@@ -82,6 +84,8 @@ int main(int argc, char **argv)
     pDriverInfo.version = NV_DISPLAY_DRIVER_INFO_VER;
     NV_CUDA pParam;
     pParam.version = NV_CUDA_VER;
+    NV_GPU_PERF_PSTATES20_INFO pPstatesInfo;
+    pPstatesInfo.version = NV_GPU_PERF_PSTATES20_INFO_VER;
 
     NvQueryInterface = (void*)GetProcAddress(LoadLibrary("nvapi.dll"), "nvapi_QueryInterface");
     if(NvQueryInterface == NULL){
@@ -112,6 +116,7 @@ int main(int argc, char **argv)
     NvGpuUid        = NvQueryInterface(0x6533ea3e);
     NvGpuPhys       = NvQueryInterface(0x5380ad1a);
     NvPerfState     = NvQueryInterface(0x927da4f6);
+    NvPerf20        = NvQueryInterface(0x6ff81213);
 
     NvInit();
     NvEnumGPUs(hdlGPU, &nGPU);
@@ -244,7 +249,7 @@ int main(int argc, char **argv)
     else printf("NvAPI_GPU_GetBusType is not available!\n");
     // Get performancestate of adapter
     if(NvPerfState && NvPerfState(hdlGPU[i], &pCurrentPstate) == NVAPI_OK){
-      printf("GPU Performance state: %d\n", pCurrentPstate);
+      printf("GPU current performance state: %d\n", pCurrentPstate);
     }
     else printf("NvAPI_GPU_GetCurrentPstate not available!\n");
     // This gets GPU and memory controller utilization
@@ -253,6 +258,14 @@ int main(int argc, char **argv)
       printf("Memory controller utilization: %ld%%\n", pDynamicPstatesInfoEx.utilization[1].percentage);
     }
     else printf("NvAPI_GPU_GetDynamicPstatesInfoEx not available!\n");
+    // Get GPU and Memory controller utilization from GetPstates20
+    if(NvPerf20 && NvPerf20(hdlGPU[i], &pPstatesInfo) == NVAPI_OK){
+      printf("GPU Performance state: %d\n", pPstatesInfo.pstates[0].pstateId);
+      printf("GPU clock frequency: %ldMHz\n", (pPstatesInfo.pstates[0].clocks[0].data.single.freq_kHz / 1000));
+      printf("Memory clock frequency: %ldMHz\n", (pPstatesInfo.pstates[0].clocks[1].data.single.freq_kHz / 1000));
+      printf("GPU current voltage: %ldmV\n", (pPstatesInfo.pstates[0].baseVoltages[0].volt_uV / 1000));
+    }
+    else printf("NvAPI_GPU_GetPstates20 not available!\n");
     // This gets GPU temperatures.
     if(NvThermals && NvThermals(hdlGPU[i], 0, &pThermalSettings) == NVAPI_OK){
       printf("GPU Current Temperature: %dC\n", pThermalSettings.sensor[0].currentTemp);
