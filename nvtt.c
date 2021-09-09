@@ -61,7 +61,7 @@ NvAPI_GPU_GetPstates20_t NvPerf20 = 0;
 
 int main(int argc, char **argv)
 {
-    int i=0, nGPU=0, pGpuType=0, memsize=0, memtype=0, pBusType=0;
+    int i=0, p=0, nGPU=0, pGpuType=0, memsize=0, memtype=0, pBusType=0;
     int *hdlGPU[NVAPI_MAX_PHYSICAL_GPUS]={0}, *hdlDisp[NVAPI_MAX_DISPLAYS]={0};
     NV_GPU_PERF_PSTATE_ID pCurrentPstate;
     NvAPI_ShortString sysname, biosname;
@@ -260,10 +260,26 @@ int main(int argc, char **argv)
     else printf("NvAPI_GPU_GetDynamicPstatesInfoEx not available!\n");
     // Get GPU and Memory controller utilization from GetPstates20
     if(NvPerf20 && NvPerf20(hdlGPU[i], &pPstatesInfo) == NVAPI_OK){
-      printf("GPU Performance state: %d\n", pPstatesInfo.pstates[0].pstateId);
-      printf("GPU clock frequency: %ldMHz\n", (pPstatesInfo.pstates[0].clocks[0].data.single.freq_kHz / 1000));
-      printf("Memory clock frequency: %ldMHz\n", (pPstatesInfo.pstates[0].clocks[1].data.single.freq_kHz / 1000));
-      printf("GPU current voltage: %ldmV\n", (pPstatesInfo.pstates[0].baseVoltages[0].volt_uV / 1000));
+      printf("\n---------- Pstates info -----------\n");
+      printf("  Number of pStates: %ld\n", pPstatesInfo.numPstates);
+      for(p = 0; p < pPstatesInfo.numPstates; p++){
+        printf("  ID of Pstate %d: %d\n", p, pPstatesInfo.pstates[p].pstateId);
+      }
+      if(pCurrentPstate == 0) p=0;
+      else if(pCurrentPstate == 2) p=1;
+      else if(pCurrentPstate == 5) p=2;
+      else if(pCurrentPstate == 8) p=3;
+      else p=0;
+      printf("  GPU clock frequency: %ldMHz\n", (pPstatesInfo.pstates[p].clocks[0].data.single.freq_kHz / 1000));
+      printf("  Memory clock frequency: %ldMHz\n", (pPstatesInfo.pstates[p].clocks[1].data.single.freq_kHz / 1000));
+      printf("  GPU current voltage: %ldmV\n", (pPstatesInfo.pstates[p].baseVoltages[0].volt_uV / 1000));
+      printf("  GPU Overclock: %dMHz\n", (pPstatesInfo.pstates[p].clocks[0].freqDelta_kHz.value / 1000));
+      printf("  GPU Min OC: %dMHz\n", (pPstatesInfo.pstates[p].clocks[0].freqDelta_kHz.valueRange.min / 1000));
+      printf("  GPU Max OC: %dMHz\n", (pPstatesInfo.pstates[p].clocks[0].freqDelta_kHz.valueRange.max / 1000));
+      printf("  Mem Overclock: %dMHz\n", (pPstatesInfo.pstates[p].clocks[1].freqDelta_kHz.value / 1000));
+      printf("  Mem Min OC: %dMHz\n", (pPstatesInfo.pstates[p].clocks[1].freqDelta_kHz.valueRange.min / 1000));
+      printf("  Mem Max OC: %dMHz\n", (pPstatesInfo.pstates[p].clocks[1].freqDelta_kHz.valueRange.max / 1000));
+      printf("--------- End Pstates info --------\n\n");
     }
     else printf("NvAPI_GPU_GetPstates20 not available!\n");
     // This gets GPU temperatures.
