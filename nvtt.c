@@ -265,11 +265,13 @@ int main(int argc, char **argv)
       for(p = 0; p < pPstatesInfo.numPstates; p++){
         printf("  ID of Pstate %d: %d\n", p, pPstatesInfo.pstates[p].pstateId);
       }
+    // This is most probably not correct for all adapters.
       if(pCurrentPstate == 0) p=0;
       else if(pCurrentPstate == 2) p=1;
       else if(pCurrentPstate == 5) p=2;
       else if(pCurrentPstate == 8) p=3;
       else p=0;
+      printf("  Current running pstate is: %d\n", pCurrentPstate);
       printf("  GPU clock frequency: %ldMHz\n", (pPstatesInfo.pstates[p].clocks[0].data.single.freq_kHz / 1000));
       printf("  Memory clock frequency: %ldMHz\n", (pPstatesInfo.pstates[p].clocks[1].data.single.freq_kHz / 1000));
       printf("  GPU current voltage: %ldmV\n", (pPstatesInfo.pstates[p].baseVoltages[0].volt_uV / 1000));
