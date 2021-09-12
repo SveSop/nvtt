@@ -270,15 +270,12 @@ int main(int argc, char **argv)
         else psID = 0;
       }
       printf("  Current running pstate is: %d\n", pCurrentPstate);
-      printf("  GPU clock frequency: %ldMHz\n", (pPstatesInfo.pstates[psID].clocks[0].data.single.freq_kHz / 1000));
+      printf("  GPU max frequency: %ldMHz\n", (pPstatesInfo.pstates[psID].clocks[0].data.range.maxFreq_kHz / 1000));
+      printf("  GPU min frequency: %ldMHz\n", (pPstatesInfo.pstates[psID].clocks[0].data.range.minFreq_kHz / 1000));
       printf("  Memory clock frequency: %ldMHz\n", (pPstatesInfo.pstates[psID].clocks[1].data.single.freq_kHz / 1000));
-      printf("  GPU current voltage: %ldmV\n", (pPstatesInfo.pstates[psID].baseVoltages[0].volt_uV / 1000));
-      printf("  GPU Overclock: %dMHz\n", (pPstatesInfo.pstates[psID].clocks[0].freqDelta_kHz.value / 1000));
-      printf("  GPU Min OC: %dMHz\n", (pPstatesInfo.pstates[psID].clocks[0].freqDelta_kHz.valueRange.min / 1000));
-      printf("  GPU Max OC: %dMHz\n", (pPstatesInfo.pstates[psID].clocks[0].freqDelta_kHz.valueRange.max / 1000));
-      printf("  Mem Overclock: %dMHz\n", (pPstatesInfo.pstates[psID].clocks[1].freqDelta_kHz.value / 1000));
-      printf("  Mem Min OC: %dMHz\n", (pPstatesInfo.pstates[psID].clocks[1].freqDelta_kHz.valueRange.min / 1000));
-      printf("  Mem Max OC: %dMHz\n", (pPstatesInfo.pstates[psID].clocks[1].freqDelta_kHz.valueRange.max / 1000));
+      printf("  GPU default voltage: %ldmV\n", (pPstatesInfo.pstates[psID].baseVoltages[0].volt_uV / 1000));
+      printf("  GPU current OC: %dMHz\n", (pPstatesInfo.pstates[psID].clocks[0].freqDelta_kHz.value / 1000));
+      printf("  Mem current OC: %dMHz\n", (pPstatesInfo.pstates[psID].clocks[1].freqDelta_kHz.value / 1000));
       printf("--------- End Pstates info --------\n\n");
     }
     else printf("NvAPI_GPU_GetPstates20 not available!\n");
