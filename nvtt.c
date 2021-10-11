@@ -10,6 +10,7 @@ typedef int (*NvAPI_Initialize_t)();
 typedef int (*NvAPI_Unload_t)();
 typedef int (*NvAPI_EnumPhysicalGPUs_t)(int *handle, int *count);
 typedef int (*NvAPI_EnumLogicalGPUs_t)(int *handle, int *count);
+typedef int (*NvAPI_GetLogicalGPUFromPhysicalGPU_t)(int *physhandle, int *loghandle);
 typedef int (*NvAPI_GPU_GetFullName_t)(int *handle, char *sysname);
 typedef int (*NvAPI_GPU_GetBusId_t)(int *handle, NvU32 *pBusId);
 typedef int (*NvAPI_GPU_GetGPUType_t)(int *handle, int *pGpuType);
@@ -38,6 +39,7 @@ NvAPI_Initialize_t NvInit = 0;
 NvAPI_Unload_t NvUnload = 0;
 NvAPI_EnumPhysicalGPUs_t NvEnumGPUs = 0;
 NvAPI_EnumLogicalGPUs_t NvEnumLogGPUs = 0;
+NvAPI_GetLogicalGPUFromPhysicalGPU_t NvGetLog = 0;
 NvAPI_GPU_GetFullName_t NvGetName = 0;
 NvAPI_GPU_GetBusId_t BusId = 0;
 NvAPI_GPU_GetGPUType_t NvGPUType = 0;
@@ -64,7 +66,7 @@ NvAPI_GPU_GetPstates20_t NvPerf20 = 0;
 int main(int argc, char **argv)
 {
     int i=0, p=0, psID=0, nGPU=0, pGpuType=0, memsize=0, memtype=0, pBusType=0;
-    int *hdlGPU[NVAPI_MAX_PHYSICAL_GPUS]={0}, *hdlDisp[NVAPI_MAX_DISPLAYS]={0};
+    int *hdlGPU[NVAPI_MAX_PHYSICAL_GPUS]={0}, *hdllGPU[NVAPI_MAX_LOGICAL_GPUS]={0}, *hdlDisp[NVAPI_MAX_DISPLAYS]={0};
     NV_GPU_PERF_PSTATE_ID pCurrentPstate;
     NvAPI_ShortString sysname, biosname;
     NvU32 pBusId=0, pDeviceId=0, pSubSystemId=0, pRevisionId=0, pExtDeviceId=0, pValue=0, retHandle=0, physHandle=0;
@@ -98,6 +100,7 @@ int main(int argc, char **argv)
     NvUnload        = NvQueryInterface(0xD22BDD7E);
     NvEnumGPUs      = NvQueryInterface(0xE5AC921F);
     NvEnumLogGPUs   = NvQueryInterface(0x48b3ea59);
+    NvGetLog        = NvQueryInterface(0xadd604d1);
     NvGetName       = NvQueryInterface(0xCEEE8E9F);
     BusId           = NvQueryInterface(0x1BE0B8E5);
     NvGPUType       = NvQueryInterface(0xc33baeb1);
@@ -122,11 +125,11 @@ int main(int argc, char **argv)
     NvPerf20        = NvQueryInterface(0x6ff81213);
 
     NvInit();
-    NvEnumLogGPUs((void *)hdlGPU, &nGPU);
+    NvEnumLogGPUs((void *)hdllGPU, &nGPU);
     printf("Logical  gpu's: %d\n", nGPU);
     if (nGPU > 0){
       for (i = 0; i < (nGPU); i++){
-        printf("Logical  gpu handle: %p\n", hdlGPU[i]);
+        printf("Logical  gpu handle: %p\n", hdllGPU[i]);
       }
     }
     NvEnumGPUs((void *)hdlGPU, &nGPU);
@@ -191,6 +194,11 @@ int main(int argc, char **argv)
     else printf("NvAPI_GPU_GetFullName not available!\n");
     // Adapter handle
     printf("GPU adapter handle: %p\n", hdlGPU[i]);
+    // Get Logical GPU from Physical GPU
+    if(NvGetLog && NvGetLog(hdlGPU[i], (void *)hdllGPU) == NVAPI_OK){
+      printf("Logical GPU Handle: %p, from Physical GPU Handle: %p\n", hdllGPU[i], hdlGPU[i]);
+    }
+    else printf("NvAPI_GetLogicalGPUFromPhysicalGPU not available!\n");
     // Get the bios version info.
     if(NvGetBiosName && NvGetBiosName(hdlGPU[i], biosname) == NVAPI_OK){
       printf("BIOS version: %s\n", biosname);
