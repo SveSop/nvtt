@@ -11,6 +11,7 @@ typedef int (*NvAPI_Unload_t)();
 typedef int (*NvAPI_EnumPhysicalGPUs_t)(int *handle, int *count);
 typedef int (*NvAPI_EnumLogicalGPUs_t)(int *handle, int *count);
 typedef int (*NvAPI_GetLogicalGPUFromPhysicalGPU_t)(int *physhandle, int *loghandle);
+typedef int (*NvAPI_GetPhysicalGPUsFromLogicalGPU_t)(int *loghandle, int *physhandle, int *count);
 typedef int (*NvAPI_GPU_GetFullName_t)(int *handle, char *sysname);
 typedef int (*NvAPI_GPU_GetBusId_t)(int *handle, NvU32 *pBusId);
 typedef int (*NvAPI_GPU_GetGPUType_t)(int *handle, int *pGpuType);
@@ -40,6 +41,7 @@ NvAPI_Unload_t NvUnload = 0;
 NvAPI_EnumPhysicalGPUs_t NvEnumGPUs = 0;
 NvAPI_EnumLogicalGPUs_t NvEnumLogGPUs = 0;
 NvAPI_GetLogicalGPUFromPhysicalGPU_t NvGetLog = 0;
+NvAPI_GetPhysicalGPUsFromLogicalGPU_t NvGetPhys = 0;
 NvAPI_GPU_GetFullName_t NvGetName = 0;
 NvAPI_GPU_GetBusId_t BusId = 0;
 NvAPI_GPU_GetGPUType_t NvGPUType = 0;
@@ -101,6 +103,7 @@ int main(int argc, char **argv)
     NvEnumGPUs      = NvQueryInterface(0xE5AC921F);
     NvEnumLogGPUs   = NvQueryInterface(0x48b3ea59);
     NvGetLog        = NvQueryInterface(0xadd604d1);
+    NvGetPhys       = NvQueryInterface(0xaea3fa32);
     NvGetName       = NvQueryInterface(0xCEEE8E9F);
     BusId           = NvQueryInterface(0x1BE0B8E5);
     NvGPUType       = NvQueryInterface(0xc33baeb1);
@@ -199,6 +202,11 @@ int main(int argc, char **argv)
       printf("Logical GPU Handle: %p, from Physical GPU Handle: %p\n", hdllGPU[i], hdlGPU[i]);
     }
     else printf("NvAPI_GetLogicalGPUFromPhysicalGPU not available!\n");
+    // Get Physical GPU from Logical GPU
+    if(NvGetPhys && NvGetPhys(hdllGPU[i], (void *)hdlGPU, &nGPU) == NVAPI_OK){
+      printf("Physical GPU Handle: %p, from Logical GPU Handle: %p (%d adapters)\n", hdlGPU[i], hdllGPU[i], nGPU);
+    }
+    else printf("NvAPI_GetPhysicalGPUsFromLogicalGPU not available!\n");
     // Get the bios version info.
     if(NvGetBiosName && NvGetBiosName(hdlGPU[i], biosname) == NVAPI_OK){
       printf("BIOS version: %s\n", biosname);
