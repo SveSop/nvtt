@@ -8,7 +8,8 @@
 typedef void *(*NvAPI_QueryInterface_t)(unsigned int offset);
 typedef int (*NvAPI_Initialize_t)();
 typedef int (*NvAPI_Unload_t)();
-typedef int (*NvAPI_EnumPhysicalGPUs_t)(int **handles, int *count);
+typedef int (*NvAPI_EnumPhysicalGPUs_t)(int *handle, int *count);
+typedef int (*NvAPI_EnumLogicalGPUs_t)(int *handle, int *count);
 typedef int (*NvAPI_GPU_GetFullName_t)(int *handle, char *sysname);
 typedef int (*NvAPI_GPU_GetBusId_t)(int *handle, NvU32 *pBusId);
 typedef int (*NvAPI_GPU_GetGPUType_t)(int *handle, int *pGpuType);
@@ -36,6 +37,7 @@ NvAPI_QueryInterface_t NvQueryInterface = 0;
 NvAPI_Initialize_t NvInit = 0;
 NvAPI_Unload_t NvUnload = 0;
 NvAPI_EnumPhysicalGPUs_t NvEnumGPUs = 0;
+NvAPI_EnumLogicalGPUs_t NvEnumLogGPUs = 0;
 NvAPI_GPU_GetFullName_t NvGetName = 0;
 NvAPI_GPU_GetBusId_t BusId = 0;
 NvAPI_GPU_GetGPUType_t NvGPUType = 0;
@@ -95,6 +97,7 @@ int main(int argc, char **argv)
     NvInit          = NvQueryInterface(0x0150E828);
     NvUnload        = NvQueryInterface(0xD22BDD7E);
     NvEnumGPUs      = NvQueryInterface(0xE5AC921F);
+    NvEnumLogGPUs   = NvQueryInterface(0x48b3ea59);
     NvGetName       = NvQueryInterface(0xCEEE8E9F);
     BusId           = NvQueryInterface(0x1BE0B8E5);
     NvGPUType       = NvQueryInterface(0xc33baeb1);
@@ -119,8 +122,20 @@ int main(int argc, char **argv)
     NvPerf20        = NvQueryInterface(0x6ff81213);
 
     NvInit();
-    NvEnumGPUs(hdlGPU, &nGPU);
-    printf("Checking nvAPI support for %d gpus\n\n", nGPU);
+    NvEnumLogGPUs((void *)hdlGPU, &nGPU);
+    printf("Logical  gpu's: %d\n", nGPU);
+    if (nGPU > 0){
+      for (i = 0; i < (nGPU); i++){
+        printf("Logical  gpu handle: %p\n", hdlGPU[i]);
+      }
+    }
+    NvEnumGPUs((void *)hdlGPU, &nGPU);
+    printf("Physical gpu's: %d\n", nGPU);
+    if (nGPU > 0){
+      for (i = 0; i < (nGPU); i++){
+        printf("Physical gpu handle: %p\n\n", hdlGPU[i]);
+      }
+    }
 
   void geninfo()
   // Probably needs some work, but assuming you cannot use 2 different nVidia drivers in
